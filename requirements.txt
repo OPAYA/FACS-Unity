@@ -1,0 +1,4 @@
+opencv-python
+py-feat
+scikit-learn
+scikit-image
