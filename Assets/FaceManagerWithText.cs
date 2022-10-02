@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System;
 using System.Text;
 
+
 [RequireComponent(typeof(SkinnedMeshRenderer))]
 public class FaceManagerWithText : MonoBehaviour {
     public float speed = 500;
@@ -20,7 +21,7 @@ public class FaceManagerWithText : MonoBehaviour {
     public bool do_talk = false;
 
     FaceManagerWithText fm;
-   // FaceExpression current_expression;
+    FaceExpression current_expression;
     float current_expression_step = 0;
     float current_expression_duration = 0;
     float current_expression_duration_inv = 0;
@@ -57,39 +58,6 @@ public class FaceManagerWithText : MonoBehaviour {
     IPEndPoint remoteEndPoint;
     Thread receiveThread; // Receiving Thread
 
-        // "AU01",
-        // "AU02",
-        // "AU04",
-        // "AU06",
-        // "AU07",
-        // "AU10",
-        // "AU12",
-        // "AU14",
-        // "AU15",
-        // "AU17",
-        // "AU23",
-        // "AU24",
-        
-        /***
-        AU4 5
-        AU1 1
-        AU2 3
-        AU5
-        AU7 9
-        AU6 7
-        AU9
-        AU10 11
-        AU17 17
-        AU15 15
-        AU25
-        AU26
-        AU27
-        AU16
-        AU20
-        AU12 13
-        AU23 19
-        AU24 21
-        ***/
     void Start()
     {
         ShowExpression(speed, apex, intensity);
@@ -134,6 +102,7 @@ public class FaceManagerWithText : MonoBehaviour {
             return;
         }
 
+        //current_expression = expression;
         movstartweights = (float[])maxweights.Clone();
         last_expression_intensity = last_expression_intensity == 0 ? intensity : current_expression_intensity;
         // maxweights = GetWeights(expression);
@@ -159,7 +128,9 @@ public class FaceManagerWithText : MonoBehaviour {
         float AU26 = float.Parse(text.Split(',')[17].Substring(1));
         float AU28 = float.Parse(text.Split(',')[18].Substring(1));
         float AU43 = float.Parse(text.Split(',')[19].Substring(1));
-    
+       
+        print(text);
+        
         maxweights = new float[nAUs]{AU5, AU12, AU28, AU23, AU24, 0, 0, 0, 0, AU43, AU26, AU4, AU6, AU10, AU15, AU9, AU17, AU2, AU1, AU14};
         maxweights = new float[nAUs]{0, AU12, 0, AU23, AU24, 0, 0, 0, 0, 0, 0, AU4, AU6, AU10, AU15, 0, AU17, AU2, AU1, AU14};
      
@@ -173,14 +144,22 @@ public class FaceManagerWithText : MonoBehaviour {
 
    
     float SmoothFunctionExpression(float t) {
+       
         return -2*t*t*t + 3*t*t;
+    }
+
+    float SmoothFunctionSpeech(float t) {
+        
+        return t;
     }
 
     public string GetData(){
         IPEndPoint anyIP = new IPEndPoint(IPAddress.Any, 0);
         byte[] data = client.Receive(ref anyIP);
         string text = Encoding.UTF8.GetString(data);
+
         return text;
+    
     }
 
     public void SendData(string message)
@@ -199,10 +178,37 @@ public class FaceManagerWithText : MonoBehaviour {
         client = new UdpClient(rxPort);
     }
 
-    void Update() {
+    void OnGUI() {
+        string expressionStr = "";
+        switch (current_expression) {
+            case FaceExpression.Neutral:
+                //expressionStr = "Neutral";
+                break;
+            case FaceExpression.Happiness:
+                //expressionStr = "Happiness";
+                break;
+            case FaceExpression.Sadness:
+                //expressionStr = "Sadness";
+                break;
+            case FaceExpression.Anger:
+                //expressionStr = "Anger";
+                break;
+            case FaceExpression.Disgust:
+                //expressionStr = "Disgust";
+                break;
+            case FaceExpression.Fear:
+                //expressionStr = "Fear";
+                break;
+            case FaceExpression.Surprise:
+                //expressionStr = "Surprise";
+                break;
+        }
+        GUI.Label(new Rect(75, 50, Screen.width/2, 22), expressionStr, new GUIStyle { fontSize=30 });
+    }
 
+    void Update() {
+  
         ShowExpression(speed, apex, intensity);
-       
         if (showing_expression) {
             if (current_expression_step > current_expression_duration + current_expression_rest) {
                 showing_expression = false;
@@ -212,7 +218,7 @@ public class FaceManagerWithText : MonoBehaviour {
                 if (current_expression_step <= current_expression_duration) {
                     for (int i = 0; i < blendShapeCount; i++) {
                         t = maxweights[i];
-                     
+                
                         skinnedMeshRenderer.SetBlendShapeWeight(i, 100*SmoothFunctionExpression(Mathf.Clamp(t, 0, 1)));
                     }
                 }
@@ -225,6 +231,10 @@ public class FaceManagerWithText : MonoBehaviour {
                 (float, float, float) cached = stack[0];
                 ShowExpression(cached.Item1, cached.Item2, cached.Item3);
                 stack.RemoveAt(0);
+            } 
+            else if (current_expression == FaceExpression.Neutral) {
+                for (int i = 0; i < blendShapeCount; i++)
+                    skinnedMeshRenderer.SetBlendShapeWeight(i, 0);
             } 
             else {
                 ShowExpression(speed, 0, 1);

@@ -411,5 +411,5 @@ if __name__ == '__main__':
                 sock.SendData(au_list) # Send this string to other application
             i += 1
             
-        cam.release()
-        cv2.destroyAllWindows()
+        # cam.release()
+        # cv2.destroyAllWindows()
